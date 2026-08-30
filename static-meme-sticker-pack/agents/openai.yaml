@@ -1,4 +1,4 @@
 interface:
   display_name: "静态定制表情包"
-  short_description: "用单张参考图随机抽取丰富反应并生成静态表情贴纸套装"
-  default_prompt: "Use $static-meme-sticker-pack to create a varied static 3x3 meme sticker set from my reference image."
+  short_description: "用参考图生成可复现、可配字、可导出的静态表情贴纸套装"
+  default_prompt: "Use $static-meme-sticker-pack to create a varied static 3x3 meme sticker set from my reference image in standard mode."
