@@ -2,7 +2,7 @@
 
 一个用于生成静态定制表情包的 Agent Skill。
 
-上传人物、宠物或虚拟角色参考图，Skill 会从 56 种反应中随机抽取不重复组合，生成 2×2、3×3、4×4 表情包或独立透明 PNG。随机结果带 seed，可以重复生成同一套表情。
+上传人物、宠物或虚拟角色参考图，Skill 会从 84 种反应中随机抽取不重复组合，生成 2×2、3×3、4×4 表情包或独立透明 PNG。随机结果带 seed，可以重复生成同一套表情。
 
 ## 效果示例
 
@@ -20,13 +20,16 @@
 
 ## 功能
 
-- 内置 56 种静态表情，覆盖 14 个情绪家族
+- 内置 84 种静态表情，覆盖基础情绪、聊天、职场、游戏、情侣和节日场景
 - 随机抽取且不重复，避免九张都是相似表情
 - 支持 `2×2`、`3×3`、`4×4` 和独立贴纸
 - 支持人物、宠物和虚拟角色参考图
 - 尽量保持脸型、发型、肤色、毛色和角色辨识度
 - 支持主题筛选和随机 seed 复现
-- 支持快速整页预览与独立透明 PNG 生产模式
+- 支持可复现的自动中文配字
+- 支持 `quick`、`standard`、`pro` 三档工作模式
+- 支持透明 PNG 标准化、白色描边、Alpha 质检和自动拼图
+- 支持微信、Telegram、WhatsApp、Discord 和通用尺寸预设
 - 某一张失败时只返工该表情，不重做已确认内容
 
 ## 支持的主题
@@ -41,6 +44,9 @@
 | `love` | 比心、飞吻、心动、心碎 |
 | `celebration` | 彩纸、欢呼、派对、胜利 |
 | `work` | 上班耗尽、咖啡续命、敬礼 |
+| `chat` | 在吗、收到、催回复、沉默输入 |
+| `gaming` | 求带飞、寄了、退游、胜利 |
+| `festival` | 红包、生日、新年、假期结束 |
 
 ## 安装
 
@@ -114,16 +120,17 @@ python static-meme-sticker-pack/scripts/pick_expressions.py \
 python static-meme-sticker-pack/scripts/pick_expressions.py \
   --count 9 \
   --theme cute \
+  --captions auto \
   --format text
 ```
 
-## 两种生成模式
+## 三种生成模式
 
-### 快速预览
+### `quick`
 
 一次生成完整宫格，适合社交媒体发布和确认整体效果。速度较快，但单个表情不方便单独返工。
 
-### 生产模式
+### `standard`
 
 逐张生成独立贴纸，再合成预览页。适合交付和长期使用：
 
@@ -131,6 +138,31 @@ python static-meme-sticker-pack/scripts/pick_expressions.py \
 - 人物身份和表情更容易控制
 - 可以获得真正透明的 PNG
 - 后续可以继续制作 GIF、WebP 或平台贴纸包
+
+### `pro`
+
+在标准模式基础上加入自动配字、统一白色描边、平台尺寸预设、Alpha 质检和输出清单。
+
+独立透明 PNG 生成完毕后运行：
+
+```bash
+python static-meme-sticker-pack/scripts/build_pack.py \
+  --input-dir input \
+  --output-dir output \
+  --platform wechat \
+  --strict-alpha
+```
+
+输出结构：
+
+```text
+output/
+├── preview.png
+├── manifest.json
+└── stickers/
+    ├── 01-expression.png
+    └── ...
+```
 
 ## 表情库
 
@@ -159,18 +191,43 @@ static-meme-sticker-pack/
 │   └── openai.yaml
 ├── references/
 │   ├── expression-library.json
+│   ├── caption-library.json
 │   └── prompt-template.md
 └── scripts/
-    └── pick_expressions.py
+    ├── pick_expressions.py
+    └── build_pack.py
 ```
 
-## 使用提醒
+## 注意事项
 
-- 生成模型无法保证每个宫格中的人物完全一致。
-- 正式交付建议逐张生成，而不是只生成一张九宫格。
-- 棋盘格图案不等于真实透明背景，生产 PNG 应检查 Alpha 通道。
-- 使用真人照片前，请获得本人同意并确认肖像权与发布范围。
-- 本 Skill 不自动授予照片、角色、Logo、服装或其他第三方素材的商业使用权。
+### 参考图要求
+
+- 人物表情包需要清晰、完整的脸部参考，建议使用正脸或轻微侧脸、头部到胸口入镜的照片。
+- 只有身体或服饰、脸部完全被裁掉的图片不能用于锁定人物身份；可以作为第二张服饰参考图使用。
+- 避免严重模糊、强滤镜、五官遮挡、多人合照和过小的人脸。参考图越清晰，九张贴纸的一致性越好。
+- 宠物参考图应能看清眼睛、耳朵、毛色和独特花纹；虚拟角色参考图应尽量展示完整配色与标志性服装。
+
+### `quick` 与生产模式
+
+- `quick` 一次生成完整宫格，速度快，适合测试风格和社交媒体预览，但它不是九张独立文件。
+- `standard` 和 `pro` 会逐张生成，便于单独返工，也更容易保持尺寸、透明背景和人物一致性。
+- 建议先用 `quick` 确认方向，再记录 seed 并切换到 `standard` 或 `pro`。
+- 同一个 seed 能复现表情选择与自动配字，但生成模型仍可能产生不同的视觉细节。
+
+### 透明背景与配字
+
+- 白色背景或棋盘格图案不等于真实透明 PNG；正式交付前应检查 Alpha 通道。
+- `build_pack.py --strict-alpha` 会报告无透明像素、主体贴边和非方形画布等问题，但不会自动完成复杂抠图。
+- 中文配字建议在图片生成后由脚本叠加，避免模型生成乱码；短句通常控制在 6 个汉字以内。
+- `build_pack.py` 需要 Pillow：`python -m pip install Pillow`。
+
+### 生成质量与使用授权
+
+- 生成模型无法保证每格五官、手指、服装和配饰完全一致；正式交付前应逐张检查。
+- 发现多余人物、肢体错误、裁头、身份漂移或错误文字时，只返工失败的单张，不必重做整套。
+- 使用真人照片前，请获得本人同意并确认肖像权、隐私权和公开发布范围。
+- 本 Skill 不自动授予照片、角色、Logo、服装、字体或其他第三方素材的商业使用权。
+- 平台尺寸与文件体积规则可能变化，正式上传微信、Telegram、WhatsApp 或 Discord 前应再次核对平台要求。
 
 ## License
 
