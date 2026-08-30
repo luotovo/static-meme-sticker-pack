@@ -1,29 +1,43 @@
-# Prompt template
+# Prompt templates
 
-Use only the fields relevant to the request.
+## Shared identity block
 
 ```text
-Use case: identity-preserve
-Asset type: static custom meme sticker pack
-Input image: Image 1 is the sole identity reference.
+Use Image 1 as the sole identity reference for the same [adult person / pet / fictional character].
+Identity invariants: [face or fur features, age impression, hair, color palette, signature accessories, source outfit unless replaced].
+Keep the subject immediately recognizable. Do not change age, gender presentation, species, fur markings, or signature costume.
 
-Create a static meme sticker pack of the same [adult person / pet / character]. Preserve [identity invariants from the reference].
+Visual direction: [photographic low-fi cutout / illustrated / chibi / pixel], friendly absurd internet-reaction humor, intensity [1-5]/5, readable pose, clean die-cut silhouette.
+```
 
-Style: [photo cutout / illustrated / chibi / pixel], exaggerated internet-reaction expressions, awkward readable poses, clean die-cut edges, friendly absurd humor.
+## Quick grid
+
+Append:
+
+```text
+Create exactly [count] distinct stickers in a strict [rows]x[columns] grid on one square canvas.
 
 Expressions in exact order:
-1. [expression ID] — [visual prompt]
+1. [ID] — [visual prompt]
 ...
 
-Layout: exactly [count] distinct stickers in a strict [rows]x[columns] grid on a square canvas. One complete subject per cell. Wide empty gaps. No overlap or elements crossing cell boundaries.
-
-Background: [genuinely transparent RGBA for production / plain neutral preview background]. Never depict a checkerboard.
-
-Constraints: same recognizable subject in every sticker; every expression and pose clearly different; no captions unless requested; no duplicated reactions; no extra subjects; no cropped head; no identity drift; no watermark.
+One complete subject per cell. Wide empty gaps. No overlap or elements crossing cells. No captions unless explicitly listed. Use a plain neutral preview background; never paint a checkerboard. No duplicate reactions, extra subjects, cropped head, identity drift, watermark, or illegible text.
 ```
 
-For independent PNG production, replace the layout paragraph with:
+## Independent production sticker
+
+Append:
 
 ```text
-Generate only expression [ID] as one centered sticker on a square transparent RGBA canvas. Do not include a grid, other reactions, or a background.
+Generate only [ID] — [visual prompt] as one centered sticker on a square genuinely transparent RGBA canvas. Do not include a grid, other reactions, caption, scenery, drop shadow, or background. Keep generous transparent padding around the complete silhouette.
 ```
+
+Add captions later with `scripts/build_pack.py` unless the user explicitly prefers model-rendered lettering.
+
+## Intensity guide
+
+- `1/5`: subtle facial change, almost no effect marks.
+- `2/5`: clear reaction, restrained pose.
+- `3/5`: default meme exaggeration and one readable gesture.
+- `4/5`: large gesture, strong distortion, comic effect marks.
+- `5/5`: absurd internet-reaction energy while identity remains recognizable.
