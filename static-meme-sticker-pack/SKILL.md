@@ -1,50 +1,74 @@
 ---
 name: static-meme-sticker-pack
-description: Create static custom meme sticker packs from a person, pet, or character reference image. Use when the user wants 2x2, 3x3, larger sticker grids, independent transparent PNG stickers, randomized reaction sets, or a reusable photo-to-meme workflow. Do not use for animated GIF or video stickers.
+description: Create static custom meme sticker packs from a person, pet, or character reference image. Use for 2x2, 3x3, or 4x4 sheets, randomized reaction sets, Chinese captions, independent transparent PNG stickers, and platform-ready exports. Do not use for animated GIF or video stickers.
 ---
 
 # Static meme sticker pack
 
-Create a varied static sticker set while keeping the referenced subject recognizable.
+Create varied, recognizable static stickers from one reference subject. Infer safe defaults and ask only when a missing choice materially changes the result.
 
-## Inputs
+## Select a mode
 
-Require a usable reference image and infer reasonable defaults for everything else. Ask only when a missing choice materially changes the result.
+- `quick`: one complete grid for ideation or social posting. Default when the user only asks for a grid.
+- `standard`: generate independent stickers, check them, then compose a preview. Use for reusable PNGs.
+- `pro`: standard mode plus captions, unified outline, platform preset, manifest, and stricter quality checks. Use for delivery.
 
-- Subject reference: person, pet, or fictional character.
-- Count/layout: default to 9 stickers in a 3x3 preview sheet. Support 4/2x2, 9/3x3, 16/4x4, or independent files.
-- Style: default to photographic low-fi meme cutouts for photos and preserve the source medium for illustrations.
-- Delivery: default to one preview sheet; use independent transparent PNG generation when the user wants production-ready stickers.
-
-If the subject is a real person, treat them as an adult unless the user clearly identifies otherwise. Keep styling non-sexual and do not imply that possession of a photo grants publication or commercial rights.
+Default to 9 stickers, `3x3`, `mixed`, intensity `3/5`, no captions, and the source visual medium. Keep real-person styling non-sexual and do not imply that possessing a photo grants publication or commercial rights.
 
 ## Choose expressions
 
-Do not claim to choose randomly in prose. Run `scripts/pick_expressions.py` so the selection is reproducible and contains no duplicates:
+Use the deterministic picker; never simulate randomness in prose:
 
 ```powershell
 python scripts/pick_expressions.py --count 9 --theme mixed
 ```
 
-Use `--seed <integer>` when the user wants the same set again. Available themes and expression details live in `references/expression-library.json`; read that file only when the user wants to browse, add, remove, or manually select reactions.
+Add `--captions auto` when captions are requested and `--seed <integer>` to reproduce a set. Supported themes are derived from the library and include `mixed`, `cute`, `cool`, `sarcastic`, `dramatic`, `love`, `celebration`, `work`, `chat`, `gaming`, and `festival`.
 
-Prefer variety across emotional families. A nine-sticker set should not be nine versions of happiness, crying, or surprise. Preserve the selected expression IDs in the final prompt or order manifest.
+Read `references/expression-library.json` only when browsing or editing reactions. Read `references/caption-library.json` only when captions are involved. Preserve selected IDs, order, captions, and seed in the manifest or final report.
+
+## Preserve identity
+
+Extract a short invariant list before generation:
+
+- person: face shape, age impression, hairstyle, hair color, skin tone, distinctive accessories;
+- pet: species, breed impression, fur pattern, eye color, ear shape, distinctive markings;
+- character: silhouette, palette, costume anchors, medium, and signature features.
+
+Do not silently change age, gender presentation, species, fur pattern, or signature costume. Preserve the source outfit unless the user requests a replacement. One sticker contains exactly one subject.
 
 ## Generate
 
-Read `references/prompt-template.md` before generating the first asset in a task. Fill the template with the selected expressions and reference-image invariants.
+Read `references/prompt-template.md` before generating the first asset. Set expression intensity from `1/5` subtle to `5/5` absurdly exaggerated. Captions should normally be added after image generation so Chinese text stays legible.
 
-For a quick social-media preview, generate one strict grid sheet. For deliverable stickers, generate each expression separately, remove its background, normalize canvas size, and compose a preview sheet afterward. Never turn a painted checkerboard into the final background; require actual alpha transparency for production PNGs.
+For `quick`, generate one strict grid. For `standard` or `pro`, generate each selected expression as a separate square transparent RGBA image. If one fails, regenerate only that ID; do not reroll accepted work.
 
-Maintain across every sticker:
+Check each result for:
 
-- Same recognizable identity, face shape, hairstyle/fur pattern, age impression, and skin/fur color.
-- One subject per sticker and one distinct reaction per cell.
-- Complete head and relevant gesture inside the cell.
-- Wide gaps, no overlap, no captions unless requested.
+- recognizable identity and one distinct reaction;
+- no extra subject, duplicated limb, cropped head, or cell overlap;
+- complete readable gesture with safe margins;
+- correct caption and no generated gibberish;
+- genuine alpha transparency rather than a painted checkerboard.
 
-If one sticker fails, regenerate only that expression. Do not reroll an accepted pack.
+## Finish production packs
+
+Run the post-processor only after independent PNGs exist:
+
+```powershell
+python scripts/build_pack.py --input-dir input --output-dir output --platform generic --strict-alpha
+```
+
+It normalizes canvases, adds a white die-cut outline, composes `preview.png`, writes `manifest.json`, and reports alpha/edge problems. Available presets: `generic`, `wechat`, `telegram`, `whatsapp`, and `discord`.
+
+For captions, provide a JSON object that maps each input filename stem to final text:
+
+```json
+{"01-polite-smile": "好的呢", "02-clock-out": "下班！"}
+```
+
+Then pass `--captions captions.json`. Keep Chinese captions short, generally at most six characters, and do not cover the face.
 
 ## Deliver
 
-Report the selected expression names and seed. For a production pack, provide independent PNGs plus a sheet preview. Do not create animation unless the user changes the request.
+For quick mode, return the sheet plus the selected expression list and seed. For production modes, return `stickers/`, `preview.png`, and `manifest.json`; summarize any quality warnings. Do not claim an image is transparent unless the alpha check passed. Do not create animation unless the user changes the request.
